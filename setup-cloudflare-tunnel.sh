@@ -21,15 +21,15 @@ echo "  Cloudflare Tunnel Setup for Jellyfin"
 echo "=========================================="
 echo ""
 
-# Check if Jellyfin is running
+# Check if Jellyfin is running (optional check)
 if ! docker ps | grep -q jellyfin; then
-    echo -e "${RED}✗${NC} Jellyfin is not running"
-    echo "Start it with: bash jellyfin-manage.sh start"
-    exit 1
+    echo -e "${YELLOW}⚠${NC} Jellyfin is not currently running"
+    echo "Note: You can start it later with: bash jellyfin-manage.sh start"
+    echo ""
+else
+    echo -e "${GREEN}✓${NC} Jellyfin is running"
+    echo ""
 fi
-
-echo -e "${GREEN}✓${NC} Jellyfin is running"
-echo ""
 
 # Install cloudflared
 echo -e "${BLUE}Installing cloudflared...${NC}"
