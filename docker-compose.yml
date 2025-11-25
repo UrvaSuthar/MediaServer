@@ -11,15 +11,15 @@ services:
     ports:
       - "${JELLYFIN_PORT:-8096}:8096"
       - "${JELLYFIN_HTTPS_PORT:-8920}:8920"
-      - "7359:7359/udp"  # Service discovery
-      - "1900:1900/udp"  # DLNA discovery
+      - "7359:7359/udp"
+      - "1900:1900/udp"
     
     # Volume mounts
     volumes:
       - ${CONFIG_DIR:-$HOME/jellyfin-config}/config:/config
       - ${CONFIG_DIR:-$HOME/jellyfin-config}/cache:/cache
       - ${MEDIA_DIR:-$HOME/Media}:/media:ro
-      - /tmp/jellyfin-transcode:/transcode  # Temporary transcoding directory
+      - /tmp/jellyfin-transcode:/transcode
     
     # Environment variables
     environment:
@@ -29,15 +29,6 @@ services:
       - JELLYFIN_CONFIG_DIR=/config
       - JELLYFIN_DATA_DIR=/config/data
       - JELLYFIN_LOG_DIR=/config/log
-    
-    # Resource limits (optional - uncomment to enable)
-    # deploy:
-    #   resources:
-    #     limits:
-    #       cpus: '2'
-    #       memory: 4G
-    #     reservations:
-    #       memory: 1G
     
     # Health check
     healthcheck:
@@ -53,19 +44,57 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    
+    networks:
+      - jellyfin-network
 
-# Optional: Add Watchtower for auto-updates
-  # watchtower:
-  #   image: containrrr/watchtower
-  #   container_name: watchtower
-  #   restart: unless-stopped
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #   environment:
-  #     - WATCHTOWER_CLEANUP=true
-  #     - WATCHTOWER_SCHEDULE=0 0 4 * * *  # 4 AM daily
-  #     - WATCHTOWER_INCLUDE_STOPPED=true
+  # AI Assistant with Ollama
+  ollama:
+    image: ollama/ollama:latest
+    container_name: jellyfin-ai
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ${CONFIG_DIR:-$HOME/jellyfin-config}/ollama:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - jellyfin-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # AI Web UI (Optional - for chatting with AI)
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: jellyfin-ai-chat
+    restart: unless-stopped
+    ports:
+      - "3000:8080"
+    volumes:
+      - ${CONFIG_DIR:-$HOME/jellyfin-config}/open-webui:/app/backend/data
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - WEBUI_NAME=Jellyfin AI Assistant
+    depends_on:
+      - ollama
+    networks:
+      - jellyfin-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 networks:
-  default:
+  jellyfin-network:
     name: jellyfin-network
+    driver: bridge
