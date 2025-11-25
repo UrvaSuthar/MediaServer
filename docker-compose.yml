@@ -2,20 +2,70 @@ version: '3.8'
 
 services:
   jellyfin:
-    image: jellyfin/jellyfin:latest
+    image: jellyfin/jellyfin:${JELLYFIN_VERSION:-latest}
     container_name: jellyfin
-    restart: unless-stopped
+    restart: ${RESTART_POLICY:-unless-stopped}
+    
+    # Network configuration
+    network_mode: bridge
     ports:
-      - "8096:8096"    # HTTP Web UI
-      - "8920:8920"    # HTTPS Web UI (optional)
+      - "${JELLYFIN_PORT:-8096}:8096"
+      - "${JELLYFIN_HTTPS_PORT:-8920}:8920"
       - "7359:7359/udp"  # Service discovery
       - "1900:1900/udp"  # DLNA discovery
+    
+    # Volume mounts
     volumes:
-      - /Users/urvasuthar/jellyfin-config/config:/config
-      - /Users/urvasuthar/jellyfin-config/cache:/cache
-      - /Users/urvasuthar/Media:/media:ro
+      - ${CONFIG_DIR:-$HOME/jellyfin-config}/config:/config
+      - ${CONFIG_DIR:-$HOME/jellyfin-config}/cache:/cache
+      - ${MEDIA_DIR:-$HOME/Media}:/media:ro
+      - /tmp/jellyfin-transcode:/transcode  # Temporary transcoding directory
+    
+    # Environment variables
     environment:
-      - TZ=Asia/Kolkata
-      - JELLYFIN_PublishedServerUrl=http://localhost:8096
-    # Note: macOS doesn't support /dev/dri for hardware acceleration
-    # VideoToolbox will be configured via web UI instead
+      - TZ=${TZ:-Asia/Kolkata}
+      - JELLYFIN_PublishedServerUrl=${PUBLISHED_SERVER_URL:-http://localhost:8096}
+      - JELLYFIN_CACHE_DIR=/cache
+      - JELLYFIN_CONFIG_DIR=/config
+      - JELLYFIN_DATA_DIR=/config/data
+      - JELLYFIN_LOG_DIR=/config/log
+    
+    # Resource limits (optional - uncomment to enable)
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '2'
+    #       memory: 4G
+    #     reservations:
+    #       memory: 1G
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8096/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# Optional: Add Watchtower for auto-updates
+  # watchtower:
+  #   image: containrrr/watchtower
+  #   container_name: watchtower
+  #   restart: unless-stopped
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   environment:
+  #     - WATCHTOWER_CLEANUP=true
+  #     - WATCHTOWER_SCHEDULE=0 0 4 * * *  # 4 AM daily
+  #     - WATCHTOWER_INCLUDE_STOPPED=true
+
+networks:
+  default:
+    name: jellyfin-network
