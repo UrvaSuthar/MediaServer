@@ -1,0 +1,72 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Jellyfin (these are created in ~/jellyfin-config, not in repo)
+config/
+cache/
+logs/
+data/
+metadata/
+plugins/
+transcodes/
+
+# Media files (these are in ~/Media, not in repo)
+*.mp4
+*.mkv
+*.avi
+*.mov
+*.wmv
+*.flv
+*.webm
+*.mp3
+*.flac
+*.wav
+*.aac
+*.m4a
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+
+# Docker
+docker-compose.override.yml
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.local
+.env.*.local

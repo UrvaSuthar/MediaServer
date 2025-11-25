@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+    restart: unless-stopped
+    ports:
+      - "8096:8096"    # HTTP Web UI
+      - "8920:8920"    # HTTPS Web UI (optional)
+      - "7359:7359/udp"  # Service discovery
+      - "1900:1900/udp"  # DLNA discovery
+    volumes:
+      - /Users/urvasuthar/jellyfin-config/config:/config
+      - /Users/urvasuthar/jellyfin-config/cache:/cache
+      - /Users/urvasuthar/Media:/media:ro
+    environment:
+      - TZ=Asia/Kolkata
+      - JELLYFIN_PublishedServerUrl=http://localhost:8096
+    # Note: macOS doesn't support /dev/dri for hardware acceleration
+    # VideoToolbox will be configured via web UI instead
